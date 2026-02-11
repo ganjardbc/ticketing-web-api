@@ -1,0 +1,184 @@
+[
+  {
+    "id": "ticket-1",
+    "code": "TCK-00001",
+    "price": 80000,
+    "status": "visible",
+    "createdAt": "2026-01-10T08:00:00Z"
+  },
+  {
+    "id": "ticket-2",
+    "code": "TCK-00002",
+    "price": 75000,
+    "status": "hidden",
+    "createdAt": "2026-01-11T09:15:00Z"
+  },
+  {
+    "id": "ticket-3",
+    "code": "TCK-00003",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-12T10:30:00Z"
+  },
+  {
+    "id": "ticket-4",
+    "code": "TCK-00004",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-13T11:20:00Z"
+  },
+  {
+    "id": "ticket-5",
+    "code": "TCK-00005",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-14T12:45:00Z"
+  },
+  {
+    "id": "ticket-6",
+    "code": "TCK-00006",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-15T13:00:00Z"
+  },
+  {
+    "id": "ticket-7",
+    "code": "TCK-00007",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-16T14:30:00Z"
+  },
+  {
+    "id": "ticket-8",
+    "code": "TCK-00008",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-17T15:15:00Z"
+  },
+  {
+    "id": "ticket-9",
+    "code": "TCK-00009",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-18T16:00:00Z"
+  },
+  {
+    "id": "ticket-10",
+    "code": "TCK-00010",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-19T09:45:00Z"
+  },
+  {
+    "id": "ticket-11",
+    "code": "TCK-00011",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-20T10:30:00Z"
+  },
+  {
+    "id": "ticket-12",
+    "code": "TCK-00012",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-21T11:15:00Z"
+  },
+  {
+    "id": "ticket-13",
+    "code": "TCK-00013",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-22T12:00:00Z"
+  },
+  {
+    "id": "ticket-14",
+    "code": "TCK-00014",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-23T13:30:00Z"
+  },
+  {
+    "id": "ticket-15",
+    "code": "TCK-00015",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-24T14:45:00Z"
+  },
+  {
+    "id": "ticket-16",
+    "code": "TCK-00016",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-25T15:20:00Z"
+  },
+  {
+    "id": "ticket-17",
+    "code": "TCK-00017",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-26T16:00:00Z"
+  },
+  {
+    "id": "ticket-18",
+    "code": "TCK-00018",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-27T09:30:00Z"
+  },
+  {
+    "id": "ticket-19",
+    "code": "TCK-00019",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-28T10:15:00Z"
+  },
+  {
+    "id": "ticket-20",
+    "code": "TCK-00020",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-29T11:00:00Z"
+  },
+  {
+    "id": "ticket-21",
+    "code": "TCK-00021",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-01-30T12:30:00Z"
+  },
+  {
+    "id": "ticket-22",
+    "code": "TCK-00022",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-01-31T13:45:00Z"
+  },
+  {
+    "id": "ticket-23",
+    "code": "TCK-00023",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-02-01T14:20:00Z"
+  },
+  {
+    "id": "ticket-24",
+    "code": "TCK-00024",
+    "price": 100000,
+    "status": "visible",
+    "createdAt": "2026-02-02T15:00:00Z"
+  },
+  {
+    "id": "ticket-25",
+    "code": "TCK-00025",
+    "price": 75000,
+    "status": "visible",
+    "createdAt": "2026-02-03T16:30:00Z"
+  },
+  {
+    "id": "ticket-1770735163456",
+    "code": "TCK-00026",
+    "price": 125000,
+    "status": "visible",
+    "createdAt": "2026-02-10T14:52:43.456Z"
+  }
+]
