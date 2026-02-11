@@ -1,20 +1,51 @@
 {
-  "name": "ticketing-mock-api",
+  "name": "ticketing-api-production",
   "version": "1.0.0",
-  "description": "Mock API server for Ticket Recording Application",
-  "main": "server.js",
+  "description": "Production-ready Ticketing RESTful API",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts"
   },
-  "keywords": ["express", "mock-api", "ticketing"],
+  "keywords": [
+    "express",
+    "api",
+    "ticketing",
+    "typescript",
+    "mysql"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "jsonwebtoken": "^9.0.0",
+    "mysql2": "^3.6.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "@types/bcrypt": "^5.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.0",
+    "@types/jest": "^29.0.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "axios": "^1.6.0",
+    "eslint": "^8.0.0",
+    "fast-check": "^3.0.0",
+    "jest": "^29.0.0",
+    "nodemon": "^3.0.1",
+    "ts-jest": "^29.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }

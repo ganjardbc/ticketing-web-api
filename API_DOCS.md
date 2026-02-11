@@ -8,10 +8,10 @@ http://localhost:3000
 ## Authentication
 All protected endpoints require Bearer token in Authorization header:
 ```
-Authorization: Bearer mock-{timestamp}-{userId}
+Authorization: Bearer <access_token>
 ```
 
-Test credentials:
+The API uses JWT tokens with access and refresh token support. Test credentials:
 - Email: `admin@example.com`
 - Password: `demo123`
 
@@ -32,14 +32,37 @@ Response:
 {
   "success": true,
   "data": {
-    "token": "mock-1707123456789-1",
     "user": {
       "id": "1",
       "email": "admin@example.com",
       "name": "Admin User",
-      "role": "admin"
+      "role": "admin",
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     }
-  }
+  },
+  "message": "Login successful"
+}
+```
+
+### POST /auth/refresh
+Refresh access token using refresh token.
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  },
+  "message": "Token refreshed successfully"
 }
 ```
 
@@ -74,20 +97,22 @@ Response:
 ```json
 {
   "success": true,
-  "data": {
-    "tickets": [
-      {
-        "id": "ticket-1",
-        "code": "TCK-00001",
-        "price": 75000,
-        "status": "visible",
-        "createdAt": "2026-01-10T08:00:00Z"
-      }
-    ],
-    "total": 25,
+  "data": [
+    {
+      "id": "ticket-1",
+      "code": "TCK-00001",
+      "price": 75000,
+      "status": "visible",
+      "createdAt": "2026-01-10T08:00:00Z"
+    }
+  ],
+  "pagination": {
     "page": 1,
-    "limit": 10
-  }
+    "limit": 10,
+    "total": 25,
+    "pages": 3
+  },
+  "message": "Tickets retrieved successfully"
 }
 ```
 
@@ -95,15 +120,17 @@ Response:
 Get ticket by ID.
 
 ### POST /tickets
-Create new ticket.
+Create new ticket (requires auth).
 ```json
 {
-  "price": 75000
+  "code": "TCK-00026",
+  "price": 100000,
+  "status": "visible"
 }
 ```
 
 ### PUT /tickets/:id
-Update ticket (price and status).
+Update ticket (requires auth). Update price and/or status.
 ```json
 {
   "price": 100000,
@@ -112,7 +139,7 @@ Update ticket (price and status).
 ```
 
 ### PATCH /tickets/:id/status
-Update ticket status only.
+Update ticket status only (requires auth).
 ```json
 {
   "status": "hidden"
@@ -120,10 +147,10 @@ Update ticket status only.
 ```
 
 ### DELETE /tickets/:id
-Hide ticket (sets status to hidden).
+Delete ticket (soft delete - requires auth). Sets status to hidden.
 
 ### GET /tickets/stats/summary
-Get ticket statistics.
+Get ticket statistics (no auth required).
 
 Response:
 ```json
@@ -133,7 +160,8 @@ Response:
     "total": 25,
     "visible": 24,
     "hidden": 1
-  }
+  },
+  "message": "Ticket statistics retrieved successfully"
 }
 ```
 
@@ -144,7 +172,7 @@ Response:
 Orders represent ticket purchases with visitor details and transaction information.
 
 ### GET /orders
-Get all orders with filters and pagination.
+Get all orders with filters and pagination (requires auth).
 
 Query params:
 - `status` - Filter by status (pending, completed, cancelled)
@@ -158,54 +186,57 @@ Response:
 ```json
 {
   "success": true,
-  "data": {
-    "orders": [
-      {
-        "id": "order-1",
-        "orderCode": "ORD-00001",
-        "userId": "2",
-        "ticketId": "ticket-1",
-        "visitorName": "John Doe",
-        "visitDate": "2026-02-10T10:30:00Z",
-        "qty": 2,
-        "type": "regular",
-        "paymentType": "cash",
-        "totalAmount": 150000,
-        "status": "completed",
-        "createdAt": "2026-01-20T10:30:00Z",
-        "completedAt": "2026-01-20T10:35:00Z"
-      }
-    ],
-    "total": 10,
+  "data": [
+    {
+      "id": "order-1",
+      "orderCode": "ORD-00001",
+      "userId": "2",
+      "ticketId": "ticket-1",
+      "visitorName": "John Doe",
+      "visitDate": "2026-02-10T10:30:00Z",
+      "qty": 2,
+      "type": "regular",
+      "paymentType": "cash",
+      "totalAmount": 150000,
+      "status": "completed",
+      "createdAt": "2026-01-20T10:30:00Z",
+      "completedAt": "2026-01-20T10:35:00Z"
+    }
+  ],
+  "pagination": {
     "page": 1,
-    "limit": 10
-  }
+    "limit": 10,
+    "total": 10,
+    "pages": 1
+  },
+  "message": "Orders retrieved successfully"
 }
 ```
 
 ### GET /orders/:id
-Get order by ID.
+Get order by ID (requires auth). User can only access their own orders.
 
 ### GET /orders/user/:userId
-Get orders by user ID.
+Get orders by user ID (requires auth). Supports pagination with `page` and `limit` query params.
 
 ### POST /orders
-Create new order.
+Create new order (requires auth).
 ```json
 {
-  "userId": "2",
-  "ticketId": "ticket-1",
-  "visitorName": "John Doe",
-  "visitDate": "2026-02-10T10:30:00Z",
+  "user_id": "2",
+  "ticket_id": "ticket-1",
+  "visitor_name": "John Doe",
+  "visit_date": "2026-02-10T10:30:00Z",
   "qty": 2,
   "type": "regular",
-  "paymentType": "cash",
-  "totalAmount": 150000
+  "payment_type": "cash",
+  "total_amount": 150000,
+  "status": "pending"
 }
 ```
 
 ### PATCH /orders/:id/status
-Update order status.
+Update order status (requires auth). User can only update their own orders.
 ```json
 {
   "status": "completed"
@@ -213,7 +244,7 @@ Update order status.
 ```
 
 ### GET /orders/stats/summary
-Get order statistics.
+Get order statistics (requires auth).
 
 Response:
 ```json
@@ -235,7 +266,8 @@ Response:
       "cash": 5,
       "nonCash": 5
     }
-  }
+  },
+  "message": "Order statistics retrieved successfully"
 }
 ```
 
@@ -244,7 +276,7 @@ Response:
 ## Analytics Endpoints (Requires Auth)
 
 ### GET /analytics/dashboard
-Get complete dashboard analytics combining tickets and orders.
+Get combined ticket and order statistics.
 
 Response:
 ```json
@@ -263,8 +295,15 @@ Response:
       "cancelled": 1,
       "totalRevenue": 1050000,
       "averageOrderValue": 150000,
-      "byType": {...},
-      "byPaymentType": {...}
+      "byType": {
+        "regular": 3,
+        "vip": 4,
+        "group": 3
+      },
+      "byPaymentType": {
+        "cash": 5,
+        "nonCash": 5
+      }
     },
     "summary": {
       "totalTickets": 25,
@@ -272,7 +311,8 @@ Response:
       "totalRevenue": 1050000,
       "completedOrders": 7
     }
-  }
+  },
+  "message": "Dashboard analytics retrieved successfully"
 }
 ```
 
@@ -283,7 +323,7 @@ Get ticket statistics.
 Get order statistics.
 
 ### GET /analytics/revenue
-Get revenue analytics by payment type.
+Get revenue breakdown by payment type.
 
 Response:
 ```json
@@ -297,7 +337,8 @@ Response:
     },
     "completedOrders": 7,
     "averageOrderValue": 150000
-  }
+  },
+  "message": "Revenue analytics retrieved successfully"
 }
 ```
 
@@ -312,7 +353,8 @@ Response:
     "regular": 3,
     "vip": 4,
     "group": 3
-  }
+  },
+  "message": "Ticket type distribution retrieved successfully"
 }
 ```
 
@@ -327,7 +369,8 @@ Response:
     "completed": 7,
     "pending": 2,
     "cancelled": 1
-  }
+  },
+  "message": "Status distribution retrieved successfully"
 }
 ```
 
@@ -340,8 +383,10 @@ Get detailed ticket report with filters.
 
 Query params:
 - `status` - Filter by status (visible, hidden)
-
-Response includes ticket list and summary statistics.
+- `minPrice` - Minimum ticket price
+- `maxPrice` - Maximum ticket price
+- `limit` - Items per page (default: 100)
+- `offset` - Pagination offset (default: 0)
 
 ### GET /reports/orders
 Get detailed order report with filters.
@@ -351,11 +396,16 @@ Query params:
 - `type` - Filter by ticket type (regular, vip, group)
 - `paymentType` - Filter by payment type (cash, non-cash)
 - `userId` - Filter by user ID
-
-Response includes order list and summary statistics.
+- `limit` - Items per page (default: 100)
+- `offset` - Pagination offset (default: 0)
 
 ### GET /reports/sales
 Get sales report by date.
+
+Query params:
+- `startDate` - Start date for report
+- `endDate` - End date for report
+- `limit` - Items per page (default: 100)
 
 Response:
 ```json
@@ -374,12 +424,17 @@ Response:
         "amount": 75000
       }
     }
-  }
+  },
+  "message": "Sales report retrieved successfully"
 }
 ```
 
 ### GET /reports/user-activity
 Get user activity report.
+
+Query params:
+- `limit` - Items per page (default: 100)
+- `offset` - Pagination offset (default: 0)
 
 Response:
 ```json
@@ -398,7 +453,8 @@ Response:
         "pendingOrders": 1
       }
     ]
-  }
+  },
+  "message": "User activity report retrieved successfully"
 }
 ```
 
@@ -440,7 +496,8 @@ Response:
       "totalRevenue": 1050000,
       "averageOrderValue": 150000
     }
-  }
+  },
+  "message": "Summary report retrieved successfully"
 }
 ```
 
@@ -449,15 +506,37 @@ Response:
 ## Health Check
 
 ### GET /health
-Check API health status.
+Check API health status and database connectivity.
 
 Response:
 ```json
 {
   "success": true,
   "data": {
-    "status": "ok"
-  }
+    "status": "healthy",
+    "timestamp": "2026-02-11T10:30:00Z",
+    "uptime": 3600.5,
+    "database": "connected",
+    "version": "1.0.0",
+    "environment": "development"
+  },
+  "message": "API is healthy"
+}
+```
+
+Unhealthy response (503):
+```json
+{
+  "success": false,
+  "data": {
+    "status": "unhealthy",
+    "timestamp": "2026-02-11T10:30:00Z",
+    "uptime": 3600.5,
+    "database": "disconnected",
+    "version": "1.0.0",
+    "environment": "development"
+  },
+  "message": "API is unhealthy - database connection failed"
 }
 ```
 
@@ -470,7 +549,13 @@ All responses follow this format:
 {
   "success": true,
   "data": {},
-  "message": "Optional message"
+  "message": "Optional message",
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 100,
+    "pages": 10
+  }
 }
 ```
 
@@ -479,7 +564,13 @@ Error responses:
 {
   "success": false,
   "data": null,
-  "message": "Error description"
+  "message": "Error description",
+  "errors": [
+    {
+      "field": "fieldName",
+      "message": "Field-specific error message"
+    }
+  ]
 }
 ```
 
@@ -525,6 +616,14 @@ Error responses:
   "name": "Admin User",
   "role": "admin",
   "createdAt": "2026-01-01T00:00:00Z"
+}
+```
+
+### Auth Tokens
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
