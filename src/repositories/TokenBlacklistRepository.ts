@@ -23,11 +23,17 @@ export class TokenBlacklistRepository {
     let connection;
     try {
       connection = await getConnection();
-      const now = new Date().toISOString();
+      const now = new Date();
+      
+      // Format dates for MySQL DATETIME column (YYYY-MM-DD HH:MM:SS)
+      const createdAtFormatted = now.toISOString().slice(0, 19).replace('T', ' ');
+      const expiresAtFormatted = entry.expires_at instanceof Date 
+        ? entry.expires_at.toISOString().slice(0, 19).replace('T', ' ')
+        : entry.expires_at;
 
       await connection.query(
         'INSERT INTO token_blacklist (id, token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?, ?)',
-        [entry.id, entry.token_hash, entry.user_id, entry.expires_at, now]
+        [entry.id, entry.token_hash, entry.user_id, expiresAtFormatted, createdAtFormatted]
       );
 
       logger.info(`Token blacklisted for user: ${entry.user_id}`);

@@ -1,44 +1,34 @@
-# Bug Fix: Logout Endpoint 500 Error & Connection Pool Issues
+# Bug Fix: Logout Endpoint 500 Error - Complete Solution
 
 ## Issue
-The `/auth/logout` endpoint was returning a 500 Internal Server Error. Additionally, other endpoints using database operations could experience similar issues.
+The `/auth/logout` endpoint was returning a 500 Internal Server Error.
 
 ## Root Cause
-The issue was in all repository files where database connections were being released **before** the queries completed. This caused queries to fail because the connection was no longer available.
+The issue had **two parts**:
 
-### Problem Code Pattern
-```typescript
-// WRONG - Connection released before query completes
-async create(entry: TokenBlacklistRecord): Promise<TokenBlacklistRecord> {
-  try {
-    const connection = await getConnection();
-    const now = new Date().toISOString();
+### Part 1: Connection Pool Management (Initial Fix)
+Database connections were being released **before** queries completed in all repository files, causing queries to fail.
 
-    await connection.query(...);  // Query starts
-    connection.release();          // Connection released immediately (WRONG!)
-    
-    return entry;
-  } catch (error) {
-    throw error;
-  }
-}
+### Part 2: DateTime Format Mismatch (Final Fix - The Real Issue)
+The `TokenBlacklistRepository.create()` method was passing ISO 8601 formatted datetime strings (e.g., `'2026-02-11T17:39:07.993Z'`) to MySQL's `DATETIME` column, which expects the format `'YYYY-MM-DD HH:MM:SS'`.
+
+**Error Message:**
+```
+Incorrect datetime value: '2026-02-11T17:39:07.993Z' for column 'created_at' at row 1
 ```
 
 ## Solution
-Changed all methods in all repository files to use a `finally` block to ensure the connection is released **after** the query completes.
 
-### Fixed Code Pattern
+### Step 1: Fixed Connection Pool Management
+Updated all repository methods to use `finally` blocks to ensure connections are released **after** queries complete:
+
 ```typescript
 // CORRECT - Connection released after query completes
 async create(entry: TokenBlacklistRecord): Promise<TokenBlacklistRecord> {
   let connection;
   try {
     connection = await getConnection();
-    const now = new Date().toISOString();
-
-    await connection.query(...);  // Query completes
-    
-    return entry;
+    // ... query code ...
   } catch (error) {
     throw error;
   } finally {
@@ -49,35 +39,35 @@ async create(entry: TokenBlacklistRecord): Promise<TokenBlacklistRecord> {
 }
 ```
 
+### Step 2: Fixed DateTime Format
+Converted ISO 8601 datetime strings to MySQL `DATETIME` format before inserting:
+
+```typescript
+async create(entry: TokenBlacklistRecord): Promise<TokenBlacklistRecord> {
+  let connection;
+  try {
+    connection = await getConnection();
+    const now = new Date();
+    
+    // Format dates for MySQL DATETIME column (YYYY-MM-DD HH:MM:SS)
+    const createdAtFormatted = now.toISOString().slice(0, 19).replace('T', ' ');
+    const expiresAtFormatted = entry.expires_at instanceof Date 
+      ? entry.expires_at.toISOString().slice(0, 19).replace('T', ' ')
+      : entry.expires_at;
+
+    await connection.query(
+      'INSERT INTO token_blacklist (id, token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?, ?)',
+      [entry.id, entry.token_hash, entry.user_id, expiresAtFormatted, createdAtFormatted]
+    );
+    // ...
+  }
+}
+```
+
 ## Files Modified
-1. `src/repositories/TokenBlacklistRepository.ts`
-2. `src/repositories/OrderRepository.ts`
-3. `src/repositories/TicketRepository.ts`
-
-### Methods Fixed
-
-#### TokenBlacklistRepository
-- `create()` - Insert token into blacklist
-- `findByTokenHash()` - Find token by hash
-- `findByUserId()` - Find tokens by user ID
-- `deleteExpired()` - Delete expired tokens
-
-#### OrderRepository
-- `create()` - Create new order
-- `findById()` - Get order by ID
-- `findAll()` - Get all orders with filtering
-- `update()` - Update order
-- `softDelete()` - Soft delete order
-- `getStatistics()` - Get order statistics
-
-#### TicketRepository
-- `create()` - Create new ticket
-- `findById()` - Get ticket by ID
-- `findByCode()` - Get ticket by code
-- `findAll()` - Get all tickets with filtering
-- `update()` - Update ticket
-- `softDelete()` - Soft delete ticket
-- `getStatistics()` - Get ticket statistics
+1. `src/repositories/TokenBlacklistRepository.ts` - Fixed datetime format and connection management
+2. `src/repositories/OrderRepository.ts` - Fixed connection management
+3. `src/repositories/TicketRepository.ts` - Fixed connection management
 
 ## Testing the Fix
 
@@ -86,20 +76,14 @@ async create(entry: TokenBlacklistRecord): Promise<TokenBlacklistRecord> {
 # 1. Start the API server
 npm run dev
 
-# 2. In another terminal, run the tests
-npm test -- --testNamePattern="POST /auth/logout"
-```
-
-### Manual testing with curl
-```bash
-# 1. Login to get token
+# 2. In another terminal, login
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"demo123"}'
+  -d '{"email":"admin@ticketing.com","password":"admin123"}'
 
-# 2. Copy the accessToken from response
+# 3. Copy the accessToken from response
 
-# 3. Logout with the token
+# 4. Logout with the token
 curl -X POST http://localhost:3000/auth/logout \
   -H "Authorization: Bearer <YOUR_TOKEN_HERE>"
 
@@ -111,24 +95,25 @@ curl -X POST http://localhost:3000/auth/logout \
 # }
 ```
 
-### Run all tests
+### Verify token is blacklisted
 ```bash
-npm test
+# Try to use the token after logout - should fail
+curl -X GET http://localhost:3000/auth/me \
+  -H "Authorization: Bearer <YOUR_TOKEN_HERE>"
+
+# Expected response:
+# {
+#   "success": false,
+#   "data": null,
+#   "message": "Token has been revoked"
+# }
 ```
 
-## Why This Happened
-The connection pool in MySQL requires connections to be released back to the pool after use. If a connection is released before the query completes, the query fails because the connection is no longer available.
+## Key Learnings
 
-The `finally` block ensures that:
-1. The connection is always released, even if an error occurs
-2. The connection is released **after** the query completes
-3. The connection is properly returned to the pool for reuse
-
-## Prevention
-This pattern should be used consistently across all repositories:
-- Always use `finally` block for connection release
-- Release connection after all async operations complete
-- This ensures proper connection pool management
+1. **DateTime Format Matters**: MySQL `DATETIME` columns require `'YYYY-MM-DD HH:MM:SS'` format, not ISO 8601 strings
+2. **Connection Pool Management**: Always use `finally` blocks to ensure connections are released after queries complete
+3. **Server Restart Required**: Changes to TypeScript files require server restart for ts-node to recompile
 
 ## Verification
 All tests should now pass:
@@ -139,8 +124,7 @@ npm test
 Expected output:
 ```
 ✓ POST /auth/logout - should logout successfully
-✓ POST /orders - should create new order
-✓ POST /tickets - should create new ticket
+✓ GET /auth/me - should fail with revoked token
 [... all other tests passing ...]
 ```
 
