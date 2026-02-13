@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { AnalyticsService } from '../services/AnalyticsService';
+import { TokenBlacklistRepository } from '../repositories/TokenBlacklistRepository';
 import { jwtAuth } from '../middleware/jwtAuth';
 import { Logger } from '../utils/logger';
 
@@ -7,11 +8,14 @@ const router = Router();
 const analyticsService = new AnalyticsService();
 const logger = new Logger('AnalyticsRoutes');
 
+const tokenBlacklistRepository = new TokenBlacklistRepository();
+const authenticate = jwtAuth(tokenBlacklistRepository);
+
 /**
  * GET /analytics/dashboard
  * Get combined ticket and order statistics
  */
-router.get('/dashboard', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/dashboard', authenticate, async (_req: Request, res: Response) => {
   try {
     const analytics = await analyticsService.getDashboardAnalytics();
     res.json({
@@ -33,7 +37,7 @@ router.get('/dashboard', jwtAuth, async (_req: Request, res: Response) => {
  * GET /analytics/tickets
  * Get ticket statistics
  */
-router.get('/tickets', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/tickets', authenticate, async (_req: Request, res: Response) => {
   try {
     const analytics = await analyticsService.getTicketAnalytics();
     res.json({
@@ -55,7 +59,7 @@ router.get('/tickets', jwtAuth, async (_req: Request, res: Response) => {
  * GET /analytics/orders
  * Get order statistics
  */
-router.get('/orders', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/orders', authenticate, async (_req: Request, res: Response) => {
   try {
     const analytics = await analyticsService.getOrderAnalytics();
     res.json({
@@ -77,7 +81,7 @@ router.get('/orders', jwtAuth, async (_req: Request, res: Response) => {
  * GET /analytics/revenue
  * Get revenue breakdown by payment type
  */
-router.get('/revenue', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/revenue', authenticate, async (_req: Request, res: Response) => {
   try {
     const analytics = await analyticsService.getRevenueAnalytics();
     res.json({
@@ -99,7 +103,7 @@ router.get('/revenue', jwtAuth, async (_req: Request, res: Response) => {
  * GET /analytics/ticket-types
  * Get order distribution by ticket type
  */
-router.get('/ticket-types', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/ticket-types', authenticate, async (_req: Request, res: Response) => {
   try {
     const analytics = await analyticsService.getTicketTypeDistribution();
     res.json({
@@ -121,7 +125,7 @@ router.get('/ticket-types', jwtAuth, async (_req: Request, res: Response) => {
  * GET /analytics/ticket-status
  * Get order distribution by status
  */
-router.get('/ticket-status', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/ticket-status', authenticate, async (_req: Request, res: Response) => {
   try {
     const analytics = await analyticsService.getStatusDistribution();
     res.json({

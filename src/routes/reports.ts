@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { ReportsService } from '../services/ReportsService';
+import { TokenBlacklistRepository } from '../repositories/TokenBlacklistRepository';
 import { jwtAuth } from '../middleware/jwtAuth';
 import { Logger } from '../utils/logger';
 
@@ -7,11 +8,14 @@ const router = Router();
 const reportsService = new ReportsService();
 const logger = new Logger('ReportsRoutes');
 
+const tokenBlacklistRepository = new TokenBlacklistRepository();
+const authenticate = jwtAuth(tokenBlacklistRepository);
+
 /**
  * GET /reports/tickets
  * Get detailed ticket report with filters
  */
-router.get('/tickets', jwtAuth, async (req: Request, res: Response) => {
+router.get('/tickets', authenticate, async (req: Request, res: Response) => {
   try {
     const filters = {
       status: req.query.status as string,
@@ -41,7 +45,7 @@ router.get('/tickets', jwtAuth, async (req: Request, res: Response) => {
  * GET /reports/orders
  * Get detailed order report with filters
  */
-router.get('/orders', jwtAuth, async (req: Request, res: Response) => {
+router.get('/orders', authenticate, async (req: Request, res: Response) => {
   try {
     const filters = {
       status: req.query.status as string,
@@ -72,7 +76,7 @@ router.get('/orders', jwtAuth, async (req: Request, res: Response) => {
  * GET /reports/sales
  * Get sales report by date
  */
-router.get('/sales', jwtAuth, async (req: Request, res: Response) => {
+router.get('/sales', authenticate, async (req: Request, res: Response) => {
   try {
     const filters = {
       startDate: req.query.startDate as string,
@@ -100,7 +104,7 @@ router.get('/sales', jwtAuth, async (req: Request, res: Response) => {
  * GET /reports/user-activity
  * Get user activity report
  */
-router.get('/user-activity', jwtAuth, async (req: Request, res: Response) => {
+router.get('/user-activity', authenticate, async (req: Request, res: Response) => {
   try {
     const filters = {
       limit: req.query.limit ? parseInt(req.query.limit as string) : 100,
@@ -127,7 +131,7 @@ router.get('/user-activity', jwtAuth, async (req: Request, res: Response) => {
  * GET /reports/summary
  * Get complete report summary
  */
-router.get('/summary', jwtAuth, async (_req: Request, res: Response) => {
+router.get('/summary', authenticate, async (_req: Request, res: Response) => {
   try {
     const report = await reportsService.getSummaryReport();
     res.json({

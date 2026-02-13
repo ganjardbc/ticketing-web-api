@@ -1,14 +1,18 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ticketService } from '../services/TicketService';
+import { TokenBlacklistRepository } from '../repositories/TokenBlacklistRepository';
 import { jwtAuth } from '../middleware/jwtAuth';
 
 const router = Router();
+
+const tokenBlacklistRepository = new TokenBlacklistRepository();
+const authenticate = jwtAuth(tokenBlacklistRepository);
 
 /**
  * GET /tickets
  * Get all tickets with pagination and filtering
  */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
@@ -89,7 +93,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
  * POST /tickets
  * Create a new ticket (requires authentication)
  */
-router.post('/', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { code, price, status } = req.body;
 
@@ -113,7 +117,7 @@ router.post('/', jwtAuth, async (req: Request, res: Response, next: NextFunction
  * PUT /tickets/:id
  * Update a ticket (requires authentication)
  */
-router.put('/:id', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { price, status } = req.body;
@@ -137,7 +141,7 @@ router.put('/:id', jwtAuth, async (req: Request, res: Response, next: NextFuncti
  * PATCH /tickets/:id/status
  * Update ticket status (requires authentication)
  */
-router.patch('/:id/status', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:id/status', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -168,7 +172,7 @@ router.patch('/:id/status', jwtAuth, async (req: Request, res: Response, next: N
  * DELETE /tickets/:id
  * Delete a ticket (soft delete - requires authentication)
  */
-router.delete('/:id', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 

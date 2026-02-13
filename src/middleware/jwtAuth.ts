@@ -55,13 +55,13 @@ export function jwtAuth(tokenBlacklistRepository: TokenBlacklistRepository) {
       // Extract token from Authorization header
       const authHeader = req.get('authorization');
       if (!authHeader) {
-        throw new AuthenticationError('Missing authorization header');
+        return next(new AuthenticationError('Missing authorization header'));
       }
 
       // Check Bearer scheme
       const parts = authHeader.split(' ');
       if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
-        throw new AuthenticationError('Invalid authorization header format');
+        return next(new AuthenticationError('Invalid authorization header format'));
       }
 
       const token = parts[1];
@@ -73,19 +73,19 @@ export function jwtAuth(tokenBlacklistRepository: TokenBlacklistRepository) {
         payload = jwt.verify(token, config.jwt.secret) as TokenPayload;
       } catch (error: any) {
         if (error.name === 'TokenExpiredError') {
-          throw new AuthenticationError('Token has expired');
+          return next(new AuthenticationError('Token has expired'));
         }
         if (error.name === 'JsonWebTokenError') {
-          throw new AuthenticationError('Invalid token');
+          return next(new AuthenticationError('Invalid token'));
         }
-        throw error;
+        return next(error);
       }
 
       // Check token blacklist
       const tokenHash = hashToken(token);
       const isBlacklisted = await tokenBlacklistRepository.isBlacklisted(tokenHash);
       if (isBlacklisted) {
-        throw new AuthenticationError('Token has been revoked');
+        return next(new AuthenticationError('Token has been revoked'));
       }
 
       // Attach user info to request
@@ -101,11 +101,8 @@ export function jwtAuth(tokenBlacklistRepository: TokenBlacklistRepository) {
 
       next();
     } catch (error) {
-      if (error instanceof AuthenticationError) {
-        throw error;
-      }
       logger.error('JWT authentication error', error);
-      throw new AuthenticationError('Authentication failed');
+      next(new AuthenticationError('Authentication failed'));
     }
   };
 }

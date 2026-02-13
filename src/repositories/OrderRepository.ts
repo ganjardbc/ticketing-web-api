@@ -182,8 +182,7 @@ export class OrderRepository {
         params.push(filter.userId);
       }
 
-      query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-      params.push(limit, offset);
+      query += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
 
       const [rows] = await connection.execute(query, params);
       const orders = rows as Order[];
