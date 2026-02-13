@@ -40,7 +40,7 @@ function createApp(): Express {
   app.use(express.json());
 
   // 4. Rate Limiter - Limit requests per IP
-  app.use(rateLimiter(config.rateLimit.windowMs, config.rateLimit.maxRequests));
+  app.use(rateLimiter(config.rateLimit.windowMs, config.rateLimit.maxRequests, ['/health/reset-rate-limiter']));
 
   // 5. Request Logger - Log all requests
   app.use(requestLogger);

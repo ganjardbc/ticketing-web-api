@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { getConnection } from '../db/connection';
 import { Logger } from '../utils/logger';
+import { clearRateLimiterStore } from '../middleware/rateLimiter';
 
 const router = Router();
 const logger = new Logger('HealthRoutes');
@@ -47,6 +48,19 @@ router.get('/', async (_req: Request, res: Response) => {
       message: 'API is unhealthy - database connection failed',
     });
   }
+});
+
+/**
+ * POST /health/reset-rate-limiter
+ * Reset rate limiter store (for testing)
+ */
+router.post('/reset-rate-limiter', (_req: Request, res: Response) => {
+  clearRateLimiterStore();
+  logger.info('Rate limiter store cleared');
+  res.json({
+    success: true,
+    message: 'Rate limiter store cleared',
+  });
 });
 
 export default router;

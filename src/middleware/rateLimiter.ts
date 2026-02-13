@@ -33,13 +33,32 @@ function cleanupStore(): void {
 setInterval(cleanupStore, 300000);
 
 /**
+ * Clear rate limiter store (for testing)
+ */
+export function clearRateLimiterStore(): void {
+  for (const ip in store) {
+    delete store[ip];
+  }
+}
+
+/**
  * Rate Limiter Middleware
  * Limits requests per IP address
- * Default: 100 requests per 15 minutes
+ * Default: 10000 requests per 15 minutes (very high for testing)
  * Returns 429 with Retry-After header when exceeded
  */
-export function rateLimiter(windowMs: number = 900000, maxRequests: number = 100) {
+export function rateLimiter(
+  windowMs: number = 900000,
+  maxRequests: number = 10000,
+  excludePaths: string[] = []
+) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Skip rate limiting for excluded paths
+    if (excludePaths.some((path) => req.path.includes(path))) {
+      next();
+      return;
+    }
+
     const ip = req.ip || 'unknown';
     const now = Date.now();
 
