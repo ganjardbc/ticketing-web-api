@@ -47,7 +47,7 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
  * Get ticket statistics
  * Must be defined before /:id route to avoid route matching conflict
  */
-router.get('/stats/summary', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/stats/summary', authenticate, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const stats = await ticketService.getTicketStatistics();
 
@@ -65,7 +65,7 @@ router.get('/stats/summary', async (_req: Request, res: Response, next: NextFunc
  * GET /tickets/:id
  * Get a specific ticket by ID
  */
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const ticket = await ticketService.getTicketById(id);
