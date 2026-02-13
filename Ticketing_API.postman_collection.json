@@ -1,0 +1,826 @@
+{
+  "info": {
+    "name": "Ticketing Mock API",
+    "description": "Complete API collection for Ticketing Mock API with all endpoints for authentication, tickets, orders, analytics, and reports.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check API health status and database connectivity"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "POST /auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.data.tokens.accessToken);",
+                  "    pm.environment.set('refreshToken', jsonData.data.tokens.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"demo123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email and password. Automatically saves tokens to environment."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout user"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current user profile (requires auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/users",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users"]
+            },
+            "description": "Get all users list (requires auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/users/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/users/1",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users", "1"]
+            },
+            "description": "Get specific user by ID (requires auth)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "GET /tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tickets?page=1&limit=10&status=visible",
+              "host": ["{{base_url}}"],
+              "path": ["tickets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "visible",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all tickets with filters and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /tickets/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tickets/ticket-1",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "ticket-1"]
+            },
+            "description": "Get ticket by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /tickets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"TCK-00026\",\n  \"price\": 100000,\n  \"status\": \"visible\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["tickets"]
+            },
+            "description": "Create new ticket (requires auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /tickets/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 100000,\n  \"status\": \"visible\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/ticket-1",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "ticket-1"]
+            },
+            "description": "Update ticket (requires auth). Update price and/or status."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /tickets/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"hidden\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/ticket-1/status",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "ticket-1", "status"]
+            },
+            "description": "Update ticket status only (requires auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /tickets/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/ticket-1",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "ticket-1"]
+            },
+            "description": "Delete ticket (soft delete - requires auth). Sets status to hidden."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /tickets/stats/summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tickets/stats/summary",
+              "host": ["{{base_url}}"],
+              "path": ["tickets", "stats", "summary"]
+            },
+            "description": "Get ticket statistics (no auth required)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "GET /orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders?page=1&limit=10&status=completed",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "regular",
+                  "disabled": true
+                },
+                {
+                  "key": "paymentType",
+                  "value": "cash",
+                  "disabled": true
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all orders with filters and pagination (requires auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /orders/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/order-1",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "order-1"]
+            },
+            "description": "Get order by ID (requires auth). User can only access their own orders."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /orders/user/:userId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/user/2?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "user", "2"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get orders by user ID (requires auth). Supports pagination with page and limit query params."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"2\",\n  \"ticket_id\": \"ticket-1\",\n  \"visitor_name\": \"John Doe\",\n  \"visit_date\": \"2026-02-10T10:30:00Z\",\n  \"qty\": 2,\n  \"type\": \"regular\",\n  \"payment_type\": \"cash\",\n  \"total_amount\": 150000,\n  \"status\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            },
+            "description": "Create new order (requires auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /orders/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/order-1/status",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "order-1", "status"]
+            },
+            "description": "Update order status (requires auth). User can only update their own orders."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /orders/stats/summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/stats/summary",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "stats", "summary"]
+            },
+            "description": "Get order statistics (requires auth)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "GET /analytics/dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analytics/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["analytics", "dashboard"]
+            },
+            "description": "Get combined ticket and order statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /analytics/tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analytics/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["analytics", "tickets"]
+            },
+            "description": "Get ticket statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /analytics/orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analytics/orders",
+              "host": ["{{base_url}}"],
+              "path": ["analytics", "orders"]
+            },
+            "description": "Get order statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /analytics/revenue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analytics/revenue",
+              "host": ["{{base_url}}"],
+              "path": ["analytics", "revenue"]
+            },
+            "description": "Get revenue breakdown by payment type"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /analytics/ticket-types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analytics/ticket-types",
+              "host": ["{{base_url}}"],
+              "path": ["analytics", "ticket-types"]
+            },
+            "description": "Get order distribution by ticket type"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /analytics/ticket-status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/analytics/ticket-status",
+              "host": ["{{base_url}}"],
+              "path": ["analytics", "ticket-status"]
+            },
+            "description": "Get order distribution by status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "GET /reports/tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/tickets?limit=100&offset=0&status=visible",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "tickets"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "status",
+                  "value": "visible",
+                  "disabled": true
+                },
+                {
+                  "key": "minPrice",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get detailed ticket report with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /reports/orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/orders?limit=100&offset=0&status=completed",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "orders"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "paymentType",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get detailed order report with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /reports/sales",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/sales?limit=100&startDate=2026-01-01&endDate=2026-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "sales"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "Get sales report by date"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /reports/user-activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/user-activity?limit=100&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "user-activity"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get user activity report"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /reports/summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/summary",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "summary"]
+            },
+            "description": "Get complete report summary"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
