@@ -1,7 +1,7 @@
 import { requestLogger } from '../../src/middleware/requestLogger';
 import { corsMiddleware } from '../../src/middleware/cors';
 import { securityHeaders } from '../../src/middleware/securityHeaders';
-import { rateLimiter } from '../../src/middleware/rateLimiter';
+import { rateLimiter, clearRateLimiterStore } from '../../src/middleware/rateLimiter';
 import { jwtAuth, optionalJwtAuth } from '../../src/middleware/jwtAuth';
 import { TokenBlacklistRepository } from '../../src/repositories/TokenBlacklistRepository';
 import jwt from 'jsonwebtoken';
@@ -188,6 +188,7 @@ describe('Middleware Stack', () => {
   describe('Rate Limiter Middleware', () => {
     beforeEach(() => {
       // Clear rate limiter store between tests
+      clearRateLimiterStore();
       jest.clearAllMocks();
     });
 
@@ -308,7 +309,9 @@ describe('Middleware Stack', () => {
 
       const middleware = jwtAuth(tokenBlacklistRepository);
 
-      await expect(middleware(req, res, next)).rejects.toThrow('Missing authorization header');
+      await middleware(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toContain('Missing authorization header');
     });
 
     it('should reject request with invalid Bearer format', async () => {
@@ -324,7 +327,9 @@ describe('Middleware Stack', () => {
 
       const middleware = jwtAuth(tokenBlacklistRepository);
 
-      await expect(middleware(req, res, next)).rejects.toThrow('Invalid authorization header format');
+      await middleware(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toContain('Invalid authorization header format');
     });
   });
 

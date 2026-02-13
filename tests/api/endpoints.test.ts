@@ -17,6 +17,15 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
     });
   });
 
+  beforeEach(async () => {
+    // Clear rate limiter before each test
+    try {
+      await api.post('/health/reset-rate-limiter');
+    } catch (error) {
+      // Ignore errors if endpoint doesn't exist
+    }
+  });
+
   // ==================== HEALTH CHECK ====================
   describe('Health Check', () => {
     it('GET /health - should return healthy status', async () => {
