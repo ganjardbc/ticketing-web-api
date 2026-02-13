@@ -32,14 +32,14 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
   describe('Auth Endpoints', () => {
     it('POST /auth/login - should login successfully', async () => {
       const response = await api.post('/auth/login', {
-        email: 'admin@example.com',
+        email: 'admin@ticketing.com',
         password: 'demo123',
       });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
       expect(response.data.data.tokens.accessToken).toBeDefined();
       expect(response.data.data.tokens.refreshToken).toBeDefined();
-      expect(response.data.data.user.email).toBe('admin@example.com');
+      expect(response.data.data.user.email).toBe('admin@ticketing.com');
 
       accessToken = response.data.data.tokens.accessToken;
       refreshToken = response.data.data.tokens.refreshToken;
@@ -48,7 +48,7 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
 
     it('POST /auth/login - should fail with invalid credentials', async () => {
       const response = await api.post('/auth/login', {
-        email: 'admin@example.com',
+        email: 'admin@ticketing.com',
         password: 'wrongpassword',
       });
       expect(response.status).toBe(401);
@@ -61,7 +61,7 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
       });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
-      expect(response.data.data.email).toBe('admin@example.com');
+      expect(response.data.data.email).toBe('admin@ticketing.com');
     });
 
     it('GET /auth/users - should get all users', async () => {
@@ -108,8 +108,8 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
     // Re-login for subsequent tests
     it('Re-login for subsequent tests', async () => {
       const response = await api.post('/auth/login', {
-        email: 'admin@example.com',
-        password: 'demo123',
+        email: 'admin@ticketing.com',
+        password: 'admin123',
       });
       accessToken = response.data.data.tokens.accessToken;
     });
@@ -118,7 +118,9 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
   // ==================== TICKETS ENDPOINTS ====================
   describe('Tickets Endpoints', () => {
     it('GET /tickets - should get all tickets with pagination', async () => {
-      const response = await api.get('/tickets?page=1&limit=10');
+      const response = await api.get('/tickets?page=1&limit=10', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
       expect(Array.isArray(response.data.data)).toBe(true);
@@ -130,7 +132,9 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
     });
 
     it('GET /tickets - should filter by status', async () => {
-      const response = await api.get('/tickets?status=visible');
+      const response = await api.get('/tickets?status=visible', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
       response.data.data.forEach((ticket: any) => {
@@ -139,17 +143,23 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
     });
 
     it('GET /tickets - should search by code', async () => {
-      const response = await api.get('/tickets?search=TCK');
+      const response = await api.get('/tickets?search=TCK', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
     });
 
     it('GET /tickets/:id - should get specific ticket', async () => {
       if (!ticketId) {
-        const ticketsResponse = await api.get('/tickets?limit=1');
+        const ticketsResponse = await api.get('/tickets?limit=1', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
         ticketId = ticketsResponse.data.data[0].id;
       }
-      const response = await api.get(`/tickets/${ticketId}`);
+      const response = await api.get(`/tickets/${ticketId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
       expect(response.data.data.id).toBe(ticketId);
@@ -202,7 +212,9 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
     });
 
     it('GET /tickets/stats/summary - should get ticket statistics', async () => {
-      const response = await api.get('/tickets/stats/summary');
+      const response = await api.get('/tickets/stats/summary', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
       expect(response.data.data.total).toBeDefined();
@@ -217,13 +229,21 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
       expect(response.status).toBe(200);
       expect(response.data.success).toBe(true);
     });
+
+    it('GET /tickets - should return 401 without auth token', async () => {
+      const response = await api.get('/tickets?page=1&limit=10');
+      expect(response.status).toBe(401);
+      expect(response.data.success).toBe(false);
+    });
   });
 
   // ==================== ORDERS ENDPOINTS ====================
   describe('Orders Endpoints', () => {
     beforeAll(async () => {
       // Get a ticket for order creation
-      const ticketsResponse = await api.get('/tickets?limit=1');
+      const ticketsResponse = await api.get('/tickets?limit=1', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (ticketsResponse.data.data.length > 0) {
         ticketId = ticketsResponse.data.data[0].id;
       }
@@ -474,8 +494,13 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
       expect(response.status).toBe(404);
     });
 
-    it('should return 401 for missing auth token', async () => {
+    it('should return 401 for missing auth token on protected endpoints', async () => {
       const response = await api.get('/orders');
+      expect(response.status).toBe(401);
+    });
+
+    it('should return 401 for missing auth token on tickets', async () => {
+      const response = await api.get('/tickets');
       expect(response.status).toBe(401);
     });
 
@@ -483,7 +508,7 @@ describe('Ticketing Mock API - Full Endpoint Tests', () => {
       const response = await api.post(
         '/auth/login',
         {
-          email: 'admin@example.com',
+          email: 'admin@ticketing.com',
           // missing password
         }
       );
