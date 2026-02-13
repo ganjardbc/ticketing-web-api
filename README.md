@@ -1,17 +1,20 @@
 # Ticketing Mock API
 
-A mock Express.js API server for the Ticket Recording Application. Provides endpoints for managing tickets, orders, users, analytics, and reports with built-in authentication and CORS support.
+A mock Express.js API server for the Ticket Recording Application. Provides endpoints for managing tickets, orders, users, analytics, and reports with JWT-based authentication, token blacklisting, and comprehensive error handling.
 
 ## Features
 
-- **Authentication** - Bearer token-based auth with mock user credentials
-- **Ticket Management** - Master data for ticket types with pricing and visibility control
-- **Order Management** - Track ticket purchases with visitor details and payment info
-- **Analytics** - Dashboard and detailed analytics on tickets, orders, and revenue
-- **Reports** - Comprehensive reporting on sales, user activity, and summaries
+- **JWT Authentication** - Secure Bearer token-based authentication with token validation and blacklisting
+- **Token Blacklist** - Logout functionality with token revocation
+- **Ticket Management** - Public catalog of ticket types with pricing and visibility control
+- **Order Management** - Authenticated access to track ticket purchases with visitor details and payment info
+- **Analytics** - Authenticated dashboard and detailed analytics on tickets, orders, and revenue
+- **Reports** - Authenticated comprehensive reporting on sales, user activity, and summaries
 - **CORS Enabled** - Cross-origin requests supported
-- **Response Formatting** - Consistent JSON response structure across all endpoints
-- **Simulated Delays** - Optional middleware for realistic API response times
+- **Rate Limiting** - Request rate limiting per IP address
+- **Security Headers** - Security headers for protection against common vulnerabilities
+- **Consistent Error Handling** - Standardized error responses with proper HTTP status codes
+- **Request Logging** - All requests logged for debugging and monitoring
 
 ## Quick Start
 
@@ -31,8 +34,14 @@ cp .env.example .env
 
 Configure the following variables:
 - `PORT` - Server port (default: 3000)
-- `DELAY_MIN` - Minimum simulated delay in ms (default: 0)
-- `DELAY_MAX` - Maximum simulated delay in ms (default: 0)
+- `NODE_ENV` - Environment (development/production)
+- `DB_HOST` - Database host
+- `DB_USER` - Database user
+- `DB_PASSWORD` - Database password
+- `DB_NAME` - Database name
+- `JWT_SECRET` - Secret key for JWT signing
+- `JWT_EXPIRY` - JWT token expiry time
+- `CORS_ORIGINS` - Allowed CORS origins
 
 ### Running the Server
 
@@ -44,6 +53,11 @@ npm run dev
 **Production**:
 ```bash
 npm start
+```
+
+**Run Tests**:
+```bash
+npm test
 ```
 
 The server will start on `http://localhost:3000`
@@ -60,97 +74,115 @@ http://localhost:3000
 Protected endpoints require a Bearer token in the Authorization header:
 
 ```
-Authorization: Bearer mock-{timestamp}-{userId}
+Authorization: Bearer <access_token>
 ```
 
-**Test Credentials:**
-- Email: `admin@example.com`
-- Password: `demo123`
+**Login to get tokens:**
+```bash
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "demo123"
+}
+```
+
+Response includes `accessToken` and `refreshToken`.
 
 ### Endpoints
 
-#### Auth (`/auth`)
-- `POST /auth/login` - Login with email/password
-- `POST /auth/logout` - Logout user
-- `GET /auth/me` - Get current user profile
-- `GET /auth/users` - Get all users
-- `GET /auth/users/:id` - Get user by ID
+#### Auth (`/auth`) - Public
+- `POST /auth/login` - Login with email/password, returns access and refresh tokens
+- `POST /auth/logout` - Logout user (requires auth, blacklists token)
+- `POST /auth/refresh` - Refresh access token using refresh token
+- `GET /auth/me` - Get current user profile (requires auth)
+- `GET /auth/users` - Get all users (requires auth)
+- `GET /auth/users/:id` - Get user by ID (requires auth)
 
-#### Tickets (`/tickets`) - Master Data
-- `GET /tickets` - List all tickets with filters
+#### Tickets (`/tickets`) - Authenticated
+All endpoints require authentication.
+- `GET /tickets` - List all tickets with pagination and filters
 - `GET /tickets/:id` - Get ticket by ID
+- `GET /tickets/stats/summary` - Get ticket statistics
 - `POST /tickets` - Create new ticket
 - `PUT /tickets/:id` - Update ticket
 - `PATCH /tickets/:id/status` - Update ticket status
-- `DELETE /tickets/:id` - Hide ticket
-- `GET /tickets/stats/summary` - Get ticket statistics
+- `DELETE /tickets/:id` - Soft delete ticket
 
-#### Orders (`/orders`) - Requires Auth
-- `GET /orders` - List all orders with filters
+#### Orders (`/orders`) - Authenticated
+All endpoints require authentication.
+- `GET /orders` - List all orders with pagination and filters
 - `GET /orders/:id` - Get order by ID
-- `GET /orders/user/:userId` - Get orders by user
+- `GET /orders/user/:userId` - Get orders by user ID
+- `GET /orders/stats/summary` - Get order statistics
 - `POST /orders` - Create new order
 - `PATCH /orders/:id/status` - Update order status
-- `GET /orders/stats/summary` - Get order statistics
 
-#### Analytics (`/analytics`) - Requires Auth
+#### Analytics (`/analytics`) - Authenticated
+All endpoints require authentication.
 - `GET /analytics/dashboard` - Complete dashboard analytics
 - `GET /analytics/tickets` - Ticket statistics
 - `GET /analytics/orders` - Order statistics
-- `GET /analytics/revenue` - Revenue analytics
-- `GET /analytics/ticket-types` - Orders by ticket type
-- `GET /analytics/ticket-status` - Orders by status
+- `GET /analytics/revenue` - Revenue analytics by payment type
+- `GET /analytics/ticket-types` - Orders distribution by ticket type
+- `GET /analytics/ticket-status` - Orders distribution by status
 
-#### Reports (`/reports`) - Requires Auth
-- `GET /reports/tickets` - Detailed ticket report
-- `GET /reports/orders` - Detailed order report
-- `GET /reports/sales` - Sales report by date
+#### Reports (`/reports`) - Authenticated
+All endpoints require authentication.
+- `GET /reports/tickets` - Detailed ticket report with filters
+- `GET /reports/orders` - Detailed order report with filters
+- `GET /reports/sales` - Sales report by date range
 - `GET /reports/user-activity` - User activity report
 - `GET /reports/summary` - Complete report summary
 
-#### Health
+#### Health (`/health`) - Public
 - `GET /health` - API health check
 
 ## Data Models
 
-### Ticket (Master Data)
-```json
-{
-  "id": "ticket-1",
-  "code": "TCK-00001",
-  "price": 75000,
-  "status": "visible",
-  "createdAt": "2026-01-10T08:00:00Z"
-}
-```
-
-### Order (Transaction Data)
-```json
-{
-  "id": "order-1",
-  "orderCode": "ORD-00001",
-  "userId": "2",
-  "ticketId": "ticket-1",
-  "visitorName": "John Doe",
-  "visitDate": "2026-02-10T10:30:00Z",
-  "qty": 2,
-  "type": "regular",
-  "paymentType": "cash",
-  "totalAmount": 150000,
-  "status": "completed",
-  "createdAt": "2026-01-20T10:30:00Z",
-  "completedAt": "2026-01-20T10:35:00Z"
-}
-```
-
 ### User
 ```json
 {
-  "id": "1",
-  "email": "admin@example.com",
-  "name": "Admin User",
-  "role": "admin",
-  "createdAt": "2026-01-01T00:00:00Z"
+  "id": "uuid",
+  "email": "user@example.com",
+  "name": "User Name",
+  "role": "admin|user",
+  "created_at": "2026-01-01T00:00:00Z"
+}
+```
+
+### Ticket
+```json
+{
+  "id": "uuid",
+  "code": "TCK-00001",
+  "price": 75000,
+  "status": "visible|hidden",
+  "created_at": "2026-01-10T08:00:00Z",
+  "updated_at": "2026-01-10T08:00:00Z",
+  "deleted_at": null
+}
+```
+
+### Order
+```json
+{
+  "id": "uuid",
+  "order_code": "ORD-1234567890-ABC123",
+  "user_id": "uuid",
+  "ticket_id": "uuid",
+  "visitor_name": "John Doe",
+  "visit_date": "2026-02-10T10:30:00Z",
+  "qty": 2,
+  "type": "regular|vip|group",
+  "payment_type": "cash|non-cash",
+  "total_amount": 150000,
+  "status": "pending|completed|cancelled",
+  "created_at": "2026-01-20T10:30:00Z",
+  "updated_at": "2026-01-20T10:30:00Z",
+  "completed_at": null,
+  "deleted_at": null
 }
 ```
 
@@ -158,9 +190,9 @@ Authorization: Bearer mock-{timestamp}-{userId}
 
 The API comes with pre-loaded sample data:
 
-- **Users** - 5 sample users (data/users.json)
-- **Tickets** - 25 sample ticket types (data/tickets.json)
-- **Orders** - 10 sample orders (data/orders.json)
+- **Users** - 5 sample users
+- **Tickets** - 25 sample ticket types
+- **Orders** - 10 sample orders
 
 ### Sample Users
 
@@ -181,7 +213,7 @@ All API responses follow a consistent format:
 {
   "success": true,
   "data": {},
-  "message": "Optional message"
+  "message": "Success message"
 }
 ```
 
@@ -190,9 +222,44 @@ All API responses follow a consistent format:
 {
   "success": false,
   "data": null,
-  "message": "Error description"
+  "message": "Error description",
+  "errors": [
+    {
+      "field": "fieldName",
+      "message": "Field error message"
+    }
+  ]
 }
 ```
+
+**Paginated Response:**
+```json
+{
+  "success": true,
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 100,
+    "pages": 10
+  },
+  "message": "Success message"
+}
+```
+
+## HTTP Status Codes
+
+- `200 OK` - Successful GET, PUT, PATCH request
+- `201 Created` - Successful POST request
+- `400 Bad Request` - Invalid request parameters
+- `401 Unauthorized` - Missing or invalid authentication token
+- `403 Forbidden` - Insufficient permissions
+- `404 Not Found` - Resource not found
+- `409 Conflict` - Resource already exists
+- `422 Unprocessable Entity` - Business rule violation
+- `429 Too Many Requests` - Rate limit exceeded
+- `500 Internal Server Error` - Server error
+- `503 Service Unavailable` - Database or service unavailable
 
 ## Project Structure
 
@@ -200,37 +267,79 @@ All API responses follow a consistent format:
 ticketing-mock-api/
 ├── server.js                 # Main server entry point
 ├── package.json              # Dependencies and scripts
+├── tsconfig.json             # TypeScript configuration
+├── jest.config.js            # Jest test configuration
 ├── .env                      # Environment variables
 ├── .env.example              # Environment template
 ├── data/                     # Sample data files
 │   ├── users.json
 │   ├── tickets.json
 │   └── orders.json
+├── logs/                     # Application logs
+│   ├── info.log
+│   ├── warn.log
+│   └── error.log
+├── coverage/                 # Test coverage reports
 └── src/
+    ├── config/
+    │   └── environment.ts    # Environment configuration
     ├── db/
-    │   └── database.js       # Database initialization
+    │   ├── connection.ts     # Database connection pool
+    │   ├── init.ts           # Database initialization
+    │   ├── migrator.ts       # Database migrations
+    │   ├── seeder.ts         # Database seeding
+    │   └── migrations/       # Migration files
     ├── middleware/
-    │   ├── auth.js           # Authentication middleware
-    │   └── delay.js          # Simulated delay middleware
+    │   ├── jwtAuth.ts        # JWT authentication
+    │   ├── errorHandler.ts   # Error handling
+    │   ├── cors.ts           # CORS configuration
+    │   ├── rateLimiter.ts    # Rate limiting
+    │   ├── requestLogger.ts  # Request logging
+    │   └── securityHeaders.ts # Security headers
+    ├── repositories/         # Data access layer
+    │   ├── UserRepository.ts
+    │   ├── TicketRepository.ts
+    │   ├── OrderRepository.ts
+    │   └── TokenBlacklistRepository.ts
+    ├── services/             # Business logic layer
+    │   ├── AuthService.ts
+    │   ├── TicketService.ts
+    │   ├── OrderService.ts
+    │   ├── AnalyticsService.ts
+    │   ├── ReportsService.ts
+    │   └── ValidationService.ts
     ├── routes/               # API route handlers
-    │   ├── auth.js
-    │   ├── tickets.js
-    │   ├── orders.js
-    │   ├── analytics.js
-    │   └── reports.js
-    └── utils/
-        └── response.js       # Response formatting utility
+    │   ├── auth.ts
+    │   ├── tickets.ts
+    │   ├── orders.ts
+    │   ├── analytics.ts
+    │   ├── reports.ts
+    │   └── health.ts
+    ├── utils/
+    │   ├── logger.ts         # Logging utility
+    │   └── response.ts       # Response formatting
+    └── server.ts             # Express app setup
 ```
 
-## Dependencies
+## Testing
 
-- **express** - Web framework
-- **cors** - Cross-origin resource sharing
-- **nodemon** - Development auto-reload (dev only)
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run tests with coverage:
+
+```bash
+npm run test:coverage
+```
 
 ## Documentation
 
 For detailed API documentation, see [API_DOCS.md](./API_DOCS.md)
+
+For testing guide, see [TESTING.md](./TESTING.md)
 
 ## License
 
